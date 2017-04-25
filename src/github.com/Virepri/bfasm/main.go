@@ -1,3 +1,5 @@
 package main
 
-func main(){}
+func main(){
+	//BFASM - a fun way to say a stupid thing
+}
