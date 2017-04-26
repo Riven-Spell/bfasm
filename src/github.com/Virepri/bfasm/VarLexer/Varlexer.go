@@ -7,6 +7,10 @@ import (
 	"strconv"
 )
 
+/*
+What all goes on here?
+*/
+
 var Variables map[string]Variable = map[string]Variable{}
 
 type Variable struct {

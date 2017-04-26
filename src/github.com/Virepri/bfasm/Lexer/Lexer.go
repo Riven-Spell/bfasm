@@ -18,6 +18,7 @@ const (
 	END
 	SET
 	CPY
+	ADD
 	SUB
 	MUL
 	DIV
@@ -33,6 +34,7 @@ var Lexicons map[string]Lexicon = map[string]Lexicon{
 	"END":END,
 	"SET":SET,
 	"CPY":CPY,
+	"ADD":ADD,
 	"SUB":SUB,
 	"MUL":MUL,
 	"DIV":DIV,

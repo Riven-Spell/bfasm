@@ -6,6 +6,7 @@ import (
 	"strings"
 	"github.com/Virepri/bfasm/VarLexer"
 	"github.com/Virepri/bfasm/Lexer"
+	"github.com/Virepri/bfasm/SyntaxAnalysis"
 )
 
 func main(){
@@ -23,8 +24,15 @@ func main(){
 			VarLexer.LexVars(file[:strings.Index(file,"!")])
 			Lexicons = Lexer.Lex(file[strings.Index(file,"!")+1:])
 
-			fmt.Println(VarLexer.Variables)
-			fmt.Println(Lexicons)
+			//fmt.Println(VarLexer.Variables)
+			//fmt.Println(Lexicons)
+
+			if SyntaxAnalysis.AnalyzeSyntax(file,Lexicons) {
+				fmt.Println("success")
+			} else {
+				fmt.Println("Errors were found")
+				return
+			}
 		} else {
 			fmt.Println("Could not open file",os.Args[1])
 		}
