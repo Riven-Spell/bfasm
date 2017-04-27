@@ -18,7 +18,7 @@ func main(){
 			f.Read(idat)
 			file := string(idat)
 
-			var Lexicons []Lexer.Lexicon
+			var Lexicons []Lexer.Token
 
 			//TODO: Actually make sure this checks if it's a variables section or not.
 			VarLexer.LexVars(file[:strings.Index(file,"!")])

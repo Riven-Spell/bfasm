@@ -2,7 +2,6 @@ package SyntaxAnalysis
 
 import (
 	"github.com/Virepri/bfasm/Lexer"
-	"strings"
 )
 
 //What do we do here?
@@ -10,20 +9,11 @@ import (
 Plain and simple: Make sure that syntax is correct.
 */
 
-func AnalyzeSyntax(file string,lcons []Lexer.Lexicon) bool {
+func AnalyzeSyntax(file string,lcons []Lexer.Token) bool {
 	result := true
-	fLCons := []string{}
-	//prepare an equivalent list of string lexicons
-	for _,v := range strings.Split(file,"\n") {
-		for _,lcon := range strings.Split(v," ") {
-			if lcon != "" {
-				fLCons = append(fLCons,lcon)
-			}
-		}
-	}
 
 	for _,v := range lcons {
-		switch v {
+		switch v.Lcon {
 		case Lexer.WHILE:
 		case Lexer.IF:
 		case Lexer.UNTIL:

@@ -8,6 +8,10 @@ import (
 //Not much of a lexical analyzer but yknow it works
 
 type Lexicon uint8
+type Token struct {
+	Lcon Lexicon
+	Dat string
+}
 
 const (
 	VAR Lexicon = iota
@@ -27,24 +31,24 @@ const (
 	BF
 )
 
-var Lexicons map[string]Lexicon = map[string]Lexicon{
-	"WHILE":WHILE,
-	"IF":IF,
-	"UNTIL":UNTIL,
-	"END":END,
-	"SET":SET,
-	"CPY":CPY,
-	"ADD":ADD,
-	"SUB":SUB,
-	"MUL":MUL,
-	"DIV":DIV,
-	"READ":READ,
-	"PRINT":PRINT,
-	"BF":BF,
+var Lexicons map[string]Token = map[string]Token{
+	"WHILE":{WHILE,"WHILE"},
+	"IF":{IF,"IF"},
+	"UNTIL":{UNTIL,"UNTIL"},
+	"END":{END,"END"},
+	"SET":{SET,"SET"},
+	"CPY":{CPY,"CPY"},
+	"ADD":{ADD,"ADD"},
+	"SUB":{SUB,"SUB"},
+	"MUL":{MUL,"MUL"},
+	"DIV":{DIV,"DIV"},
+	"READ":{READ,"READ"},
+	"PRINT":{PRINT,"PRINT"},
+	"BF":{BF,"BF"},
 }
 
-func Lex(dat string) []Lexicon {
-	o := make([]Lexicon,0)
+func Lex(dat string) []Token {
+	o := make([]Token,0)
 	for _, ln := range strings.Split(dat,"\n") {
 		for _, v := range strings.Split(ln, " ") {
 			lcon, t := Lexicons[v];
@@ -54,13 +58,13 @@ func Lex(dat string) []Lexicon {
 			default:
 				if strings.Index(v,"[") != -1 {
 					//Definitely a variable
-					o = append(o,VAR)
+					o = append(o,Token{VAR,v})
 				} else if _,t := VarLexer.Variables[v]; t {
 					//Definitely a variable
-					o = append(o,VAR)
+					o = append(o,Token{VAR,v})
 				} else if v != "" {
 					//Probably not a variable since it's not defined, Lexicon checking (after syntactic analysis) should catch this.
-					o = append(o,VAL)
+					o = append(o,Token{VAL,v})
 				}
 			}
 		}
