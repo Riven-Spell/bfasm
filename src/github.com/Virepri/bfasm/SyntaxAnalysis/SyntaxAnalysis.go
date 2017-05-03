@@ -28,8 +28,8 @@ var WantedLexicons map[Lexer.Lexicon][][2]Lexer.Lexicon = map[Lexer.Lexicon][][2
 	Lexer.MUL:{{Lexer.VAR},{Lexer.VAR,Lexer.VAL}},
 	Lexer.DIV:{{Lexer.VAR},{Lexer.VAR,Lexer.VAL}}, //math ops
 
-	Lexer.READ:{{Lexer.VAR}},
-	Lexer.PRINT:{{Lexer.VAR}}, //IO ops
+	Lexer.READ:{{Lexer.VAR},{Lexer.VAL}},
+	Lexer.PRINT:{{Lexer.VAR},{Lexer.VAL}}, //IO ops
 
 	Lexer.BF:{{Lexer.VAL},{Lexer.VAL}}, //Special ops
 }
