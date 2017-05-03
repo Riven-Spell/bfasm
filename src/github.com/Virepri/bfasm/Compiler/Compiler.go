@@ -128,15 +128,20 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				case 1:
 					//array ref
 					if SyntaxUtil.GetValType(lcon[k+2].Dat) == 2 {
-						o += getMoveOp(ref)
-						o += strings.Repeat("[-]>", len(lcon[k+1].Dat))
-						o = o[:len(o)-1]
-						ptrloc += uint(len(lcon[k+1].Dat))
+						if len(lcon[k+2].Dat) - 2 <= VarLexer.Variables[lcon[k+1].Dat].Arrlen {
+							o += getMoveOp(ref)
+							o += strings.Repeat("[-]>", len(lcon[k+1].Dat))
+							o = o[:len(o)-1]
+							ptrloc += uint(len(lcon[k+1].Dat))
 
-						o += getMoveOp(ref)
-						for k, v := range []uint8(lcon[k+2].Dat[1:len(lcon[k+2].Dat)-1]) {
-							o += getMoveOp(ref + uint(k))
-							o += strings.Repeat("+", int(v))
+							o += getMoveOp(ref)
+							for k, v := range []uint8(lcon[k+2].Dat[1:len(lcon[k+2].Dat)-1]) {
+								o += getMoveOp(ref + uint(k))
+								o += strings.Repeat("+", int(v))
+							}
+						} else {
+							fmt.Println("error: Cannot assign a string larger than the array's size. line",line)
+							return "",false
 						}
 					} else {
 						fmt.Println("error: Cannot assign non-string to array. line",line)
@@ -165,6 +170,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				return "",false
 			}
 		case Lexer.CPY:
+			//You might as well kill me as I write this.
 
 		case Lexer.ADD:
 		case Lexer.SUB:
