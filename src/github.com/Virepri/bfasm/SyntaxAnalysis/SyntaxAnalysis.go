@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"strconv"
+	"github.com/Virepri/bfasm/SyntaxUtil"
 )
 
 //What do we do here?
@@ -76,15 +77,7 @@ func AnalyzeSyntax(lcons []Lexer.Token, line, errors int) bool {
 				}
 			}
 		} else {
-			//definitely a val. Check if it meets any of the types
-			if strings.Index(lcons[0].Dat,"0x") == 0 {
-				//hex
-			} else if _,err := strconv.Atoi(lcons[0].Dat); err == nil {
-				//int
-			} else if strings.Index(lcons[0].Dat,"\"") != strings.LastIndex(lcons[0].Dat,"\"") {
-				//string
-			} else {
-				//not a valid value
+			if SyntaxUtil.GetValType(lcons[0].Dat) == 3 {
 				fmt.Println("error",errors,": Value on line",line,"is an invalid value.")
 				errors++
 			}

@@ -15,6 +15,7 @@ var Variables map[string]Variable = map[string]Variable{}
 type Variable struct {
 	Array bool
 	Arrlen int
+	Type uint //0 hex 1 int 2 string 3 invalid
 }
 
 func LexVars(dat string) {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"strconv"
+	"github.com/Virepri/bfasm/SyntaxUtil"
+	"github.com/Virepri/bfasm/HexUtil"
 )
 
 type Allocation struct {
@@ -20,9 +22,11 @@ var tempalloc []Allocation
 var endofallocs int
 var ifallocs []int
 
+var ptrloc uint
+
 func Compile(lcon []Lexer.Token) (string,bool) {
 	o := ""
-	ptrloc := uint(0)
+	ptrloc = uint(0)
 	depthpointers := []uint {}
 	depthpointerstype := []Lexer.Lexicon{}
 	line := 0
@@ -54,7 +58,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 
 		switch v.Lcon {
 		case Lexer.WHILE:
-			ref, s, a := getRefPtr(lcon[k+1].Dat,line,allocref)
+			ref, s, a := getRefPtr(lcon[k+1].Dat,line)
 
 			if s {
 				switch a {
@@ -63,7 +67,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				default:
 					depthpointers = append(depthpointers,ref)
 					depthpointerstype = append(depthpointerstype,Lexer.WHILE)
-					o += getMoveOp(ptrloc,ref)
+					o += getMoveOp(ref)
 				}
 			} else {
 				return "",false
@@ -76,10 +80,10 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 
 			ifallocs = append(ifallocs,len(tempalloc)-1)
 
-			o += getMoveOp(ptrloc,allocpoint)
+			o += getMoveOp(allocpoint)
 			o += "[-]"
 
-			ref,s,a := getRefPtr(lcon[k+1].Dat,line,allocref)
+			ref,s,a := getRefPtr(lcon[k+1].Dat,line)
 
 			if s {
 				switch a {
@@ -89,26 +93,27 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				default:
 					depthpointers = append(depthpointers,ref)
 					depthpointerstype = append(depthpointerstype,Lexer.IF)
-					o += getMoveOp(ptrloc,ref)
+					o += getMoveOp(ref)
 				}
 			} else {
 				return "",false
 			}
 
-			o += "[" + getMoveOp(ptrloc,allocpoint) + "-]" + getMoveOp(ptrloc,allocpoint) + "[" + getMoveOp(ptrloc,ref)
+			o += "[" + getMoveOp(allocpoint) + "-]" + getMoveOp(allocpoint) + "[" + getMoveOp(ref)
 
 		case Lexer.UNTIL:
+			//TODO: this. I'm gonna give it a bit because I'm sick of programming loops
 		case Lexer.END:
 			switch depthpointerstype[len(depthpointerstype)-1] {
 			case Lexer.WHILE:
-				o += getMoveOp(ptrloc,depthpointers[len(depthpointers)-1])
+				o += getMoveOp(depthpointers[len(depthpointers)-1])
 				o += "]"
 				depthpointers = depthpointers[:len(depthpointers)-1]
 				depthpointerstype = depthpointerstype[:len(depthpointerstype)-1]
 			case Lexer.IF:
-				o += getMoveOp(ptrloc,tempalloc[ifallocs[len(ifallocs)-1]].start)
+				o += getMoveOp(tempalloc[ifallocs[len(ifallocs)-1]].start)
 				o += "[-]]"
-				o += getMoveOp(ptrloc,depthpointers[len(depthpointers)-1])
+				o += getMoveOp(depthpointers[len(depthpointers)-1])
 				depthpointers = depthpointers[:len(depthpointers)-1]
 				depthpointerstype = depthpointerstype[:len(depthpointerstype)-1]
 				ifallocs = ifallocs[:len(ifallocs)-1]
@@ -116,6 +121,49 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 			}
 
 		case Lexer.SET:
+			ref,s,a := getRefPtr(lcon[k+1].Dat,line)
+
+			if s {
+				switch a {
+				case 1:
+					//array ref
+					if SyntaxUtil.GetValType(lcon[k+2].Dat) == 2 {
+						o += getMoveOp(ref)
+						o += strings.Repeat("[-]>", len(lcon[k+1].Dat))
+						o = o[:len(o)-1]
+						ptrloc += uint(len(lcon[k+1].Dat))
+
+						o += getMoveOp(ref)
+						for k, v := range []uint8(lcon[k+2].Dat[1:len(lcon[k+2].Dat)-1]) {
+							o += getMoveOp(ref + uint(k))
+							o += strings.Repeat("+", int(v))
+						}
+					} else {
+						fmt.Println("error: Cannot assign non-string to array. line",line)
+						return "",false
+					}
+				default:
+					//var ref
+					o += getMoveOp(ref)
+					o += "[-]"
+					vt := SyntaxUtil.GetValType(lcon[k+2].Dat)
+					switch vt {
+					case 0:
+						//hex
+						o += strings.Repeat("+", HexUtil.HexToInt(lcon[k+2].Dat[2:]))
+					case 1:
+						//int
+						num, _ := strconv.Atoi(lcon[k+2].Dat)
+						o += strings.Repeat("+", num)
+					case 2:
+						//string
+						info := uint8(lcon[k+2].Dat[1])
+						o += strings.Repeat("+", int(info))
+					}
+				}
+			} else {
+				return "",false
+			}
 		case Lexer.CPY:
 
 		case Lexer.ADD:
@@ -133,21 +181,22 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 	return o,true
 }
 
-func getMoveOp(currptr, endptr uint) string {
+func getMoveOp(endptr uint) string {
 	o := ""
 
-	if currptr > endptr {
+	if ptrloc > endptr {
 		//go back
-		o += strings.Repeat("<",int(currptr-endptr))
-	} else if currptr < endptr {
+		o += strings.Repeat("<",int(ptrloc-endptr))
+	} else if ptrloc < endptr {
 		//go forward
-		o += strings.Repeat(">",int(endptr-currptr))
+		o += strings.Repeat(">",int(endptr-ptrloc))
 	}
+	ptrloc = endptr
 
 	return o
 }
 
-func getRefPtr(dat string,line int,allocref map[string]*Allocation) (uint, bool, uint){
+func getRefPtr(dat string,line int) (uint, bool, uint){
 	loc, success, arrref := uint(0),true,uint(0)
 	//arrref: 0 = not an array pointer
 	//1 = pointer to array name
