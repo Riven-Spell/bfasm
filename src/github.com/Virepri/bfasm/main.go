@@ -26,12 +26,10 @@ func main(){
 			//fmt.Println(VarLexer.Variables)
 			fmt.Println(Lexicons)
 
-			if SyntaxAnalysis.AnalyzeSyntax(Lexicons,0,0) {
-				fmt.Println("success")
-			} else {
-				fmt.Println("Errors were found")
+			if !SyntaxAnalysis.AnalyzeSyntax(Lexicons,0,0) {
 				return
 			}
+			fmt.Println("success")
 		} else {
 			fmt.Println("Could not open file",os.Args[1])
 		}
