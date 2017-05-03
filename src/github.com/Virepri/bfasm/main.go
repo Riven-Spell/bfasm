@@ -20,14 +20,13 @@ func main(){
 
 			var Lexicons []Lexer.Token
 
-			//TODO: Actually make sure this checks if it's a variables section or not.
 			VarLexer.LexVars(file[:strings.Index(file,"!")])
 			Lexicons = Lexer.Lex(file[strings.Index(file,"!")+1:])
 
 			//fmt.Println(VarLexer.Variables)
-			//fmt.Println(Lexicons)
+			fmt.Println(Lexicons)
 
-			if SyntaxAnalysis.AnalyzeSyntax(file,Lexicons) {
+			if SyntaxAnalysis.AnalyzeSyntax(Lexicons,0,0) {
 				fmt.Println("success")
 			} else {
 				fmt.Println("Errors were found")
