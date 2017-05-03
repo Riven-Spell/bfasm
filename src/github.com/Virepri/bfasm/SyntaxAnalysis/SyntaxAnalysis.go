@@ -61,7 +61,7 @@ func AnalyzeSyntax(lcons []Lexer.Token, line, errors int) bool {
 		//must be var or val
 		if lcons[0].Lcon == Lexer.VAR {
 			if strings.Index(lcons[0].Dat,"[") != -1 {
-				if strings.Index(lcons[0].Dat,"]") != -1 {
+				if strings.Index(lcons[0].Dat,"]") == -1 {
 					fmt.Println("error",errors,": Unfinished array reference on line",line)
 					errors++
 				}

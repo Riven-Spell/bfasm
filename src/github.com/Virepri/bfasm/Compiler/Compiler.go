@@ -3,6 +3,8 @@ package Compiler
 import (
 	"github.com/Virepri/bfasm/Lexer"
 	"github.com/Virepri/bfasm/VarLexer"
+	"fmt"
+	"strings"
 )
 
 type Allocation struct {
@@ -13,30 +15,36 @@ type Allocation struct {
 
 func Compile(lcon []Lexer.Token) string {
 	o := ""
-	//ptrloc := 0
+	ptrloc := 0
 	line := 0
 
+	allocref := map[string]*Allocation{}
 	allocations := []Allocation{}
 	endofallocs := 0
 
 	for k,v := range VarLexer.Variables {
 		if v.Array {
 			allocations = append(allocations, Allocation{varname:k , start:endofallocs+1 , end:endofallocs+1+v.Arrlen })
+			allocref[k] = &allocations[len(allocations)-1]
 			endofallocs += v.Arrlen+1
 		} else {
 			allocations = append(allocations, Allocation{varname:k , start:endofallocs+1 , end: endofallocs+1})
+			allocref[k] = &allocations[len(allocations)-1]
 			endofallocs++
 		}
 	}
 
 
-	for _,v := range lcon {
+	for k,v := range lcon {
 		if v.Lcon != Lexer.VAR && v.Lcon != Lexer.VAL {
 			line++
 		}
 
 		switch v.Lcon {
 		case Lexer.WHILE:
+			if strings.Index(lcon[k+1].Dat,"[") != -1 {
+				//references an array
+			}
 		case Lexer.IF:
 		case Lexer.UNTIL:
 		case Lexer.END:
