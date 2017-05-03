@@ -1,4 +1,4 @@
 helloworld[12]
 !
 SET helloworld "Hello World!"
-PRINT helloworld 1
+PRINT helloworld 12
