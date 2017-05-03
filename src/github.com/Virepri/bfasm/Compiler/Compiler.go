@@ -5,32 +5,26 @@ import (
 	"github.com/Virepri/bfasm/VarLexer"
 )
 
+type Allocation struct {
+	varname string
+	start int
+	end int
+}
+
 func Compile(lcon []Lexer.Token) string {
 	o := ""
-	ptrloc := 0
+	//ptrloc := 0
 	line := 0
 
-	allocations := []struct{
-		varname string
-		start int
-		end int
-	}{}
+	allocations := []Allocation{}
 	endofallocs := 0
 
 	for k,v := range VarLexer.Variables {
 		if v.Array {
-			allocations = append(allocations, struct {
-				varname string
-				start   int
-				end     int
-			}{varname:k , start:endofallocs+1 , end:endofallocs+1+v.Arrlen })
+			allocations = append(allocations, Allocation{varname:k , start:endofallocs+1 , end:endofallocs+1+v.Arrlen })
 			endofallocs += v.Arrlen+1
 		} else {
-			allocations = append(allocations, struct {
-				varname string
-				start   int
-				end     int
-			}{varname:k , start:endofallocs+1 , end: endofallocs+1})
+			allocations = append(allocations, Allocation{varname:k , start:endofallocs+1 , end: endofallocs+1})
 			endofallocs++
 		}
 	}
