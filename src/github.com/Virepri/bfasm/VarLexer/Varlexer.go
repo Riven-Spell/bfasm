@@ -1,7 +1,6 @@
 package VarLexer
 
 import (
-	"go/types"
 	"strings"
 	"fmt"
 	"strconv"
@@ -14,10 +13,8 @@ What all goes on here?
 var Variables map[string]Variable = map[string]Variable{}
 
 type Variable struct {
-	t types.Type
-	array bool
-	arrlen int
-	v interface{}
+	Array bool
+	Arrlen int
 }
 
 func LexVars(dat string) {
@@ -27,8 +24,8 @@ func LexVars(dat string) {
 			if strings.Index(v,"]") != -1 {
 				arlen, _ := strconv.Atoi(v[strings.Index(v,"[")+1:strings.Index(v,"]")])
 				Variables[v[:strings.Index(v,"[")]] = Variable{
-					array:true,
-					arrlen:arlen,
+					Array:true,
+					Arrlen:arlen,
 				}
 			} else {
 				//Error
@@ -37,7 +34,7 @@ func LexVars(dat string) {
 		} else if len(v) != 0 {
 			//Normal variable name
 			Variables[v] = Variable{
-				array:false,
+				Array:false,
 			}
 		}
 	}

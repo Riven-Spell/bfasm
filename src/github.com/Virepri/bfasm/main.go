@@ -24,7 +24,7 @@ func main(){
 			Lexicons = Lexer.Lex(file[strings.Index(file,"!")+1:])
 
 			//fmt.Println(VarLexer.Variables)
-			fmt.Println(Lexicons)
+			//fmt.Println(Lexicons)
 
 			if !SyntaxAnalysis.AnalyzeSyntax(Lexicons,0,0) {
 				return
