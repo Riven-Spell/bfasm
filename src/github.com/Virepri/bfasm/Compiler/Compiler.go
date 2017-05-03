@@ -18,6 +18,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 	o := ""
 	ptrloc := uint(0)
 	depthpointers := []uint {}
+	depthpointerstype := []Lexer.Lexicon{}
 	line := 0
 
 	allocref := map[string]*Allocation{}
@@ -72,9 +73,19 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				o += getMoveOp(ptrloc,depthpointers[len(depthpointers)-1])
 			}
 			o += "["
+			depthpointerstype = append(depthpointerstype,Lexer.WHILE)
 		case Lexer.IF:
 		case Lexer.UNTIL:
 		case Lexer.END:
+			switch depthpointerstype[len(depthpointerstype)-1] {
+			case Lexer.WHILE:
+				o += getMoveOp(ptrloc,depthpointers[len(depthpointers)-1])
+				o += "]"
+				depthpointers = depthpointers[:len(depthpointers)-1]
+				depthpointerstype = depthpointerstype[:len(depthpointerstype)-1]
+			case Lexer.IF:
+			case Lexer.UNTIL:
+			}
 
 		case Lexer.SET:
 		case Lexer.CPY:
