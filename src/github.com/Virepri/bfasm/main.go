@@ -7,6 +7,7 @@ import (
 	"github.com/Virepri/bfasm/VarLexer"
 	"github.com/Virepri/bfasm/Lexer"
 	"github.com/Virepri/bfasm/SyntaxAnalysis"
+	"github.com/Virepri/bfasm/Compiler"
 )
 
 func main(){
@@ -29,7 +30,12 @@ func main(){
 			if !SyntaxAnalysis.AnalyzeSyntax(Lexicons,0,0) {
 				return
 			}
-			fmt.Println("success")
+
+			if output, success := Compiler.Compile(Lexicons); success {
+				fmt.Println(output)
+				return
+			}
+			fmt.Println("Failed to compile file",os.Args[1])
 		} else {
 			fmt.Println("Could not open file",os.Args[1])
 		}
