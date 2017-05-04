@@ -162,7 +162,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 						o += strings.Repeat("+", num)
 					case 2:
 						//string
-						info := uint8(lcon[k+2].Dat[0])
+						info := uint8(lcon[k+2].Dat[1])
 						o += strings.Repeat("+", int(info))
 					}
 				}

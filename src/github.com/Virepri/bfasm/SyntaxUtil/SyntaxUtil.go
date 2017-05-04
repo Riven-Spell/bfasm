@@ -15,8 +15,10 @@ func GetValType(dat string) uint {
 	} else if strings.Index(dat,"\"") != strings.LastIndex(dat,"\"") {
 		//string
 		return 2
+	} else if strings.Index(dat,"'") != strings.LastIndex(dat,"'"){
+		//char, treat it as a string.
+		return 2
 	} else {
-		//not a valid value
 		return 3
 	}
 }
