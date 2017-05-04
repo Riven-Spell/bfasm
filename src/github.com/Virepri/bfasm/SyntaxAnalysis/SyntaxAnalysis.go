@@ -5,7 +5,6 @@ import (
 	"github.com/Virepri/bfasm/VarLexer"
 	"fmt"
 	"strings"
-	"strconv"
 	"github.com/Virepri/bfasm/SyntaxUtil"
 )
 
@@ -41,22 +40,27 @@ func AnalyzeSyntax(lcons []Lexer.Token, line, errors int) bool {
 	}
 	if d,t := WantedLexicons[lcons[0].Lcon]; t == true {
 		line++
-		for k,v := range d {
-			if !testLexicon(lcons[1+k].Lcon,v) {
-				//failed the test
-				/*
+		if len(lcons) - 1 >= len(WantedLexicons[lcons[0].Lcon]) {
+			for k, v := range d {
+				if !testLexicon(lcons[1+k].Lcon, v) {
+					//failed the test
+					/*
 				basically means that argument k was not the expected lexicon
 				*/
 
-				//the fact that I'm even putting this here is disappointing
-				VVTS := map[[2]Lexer.Lexicon]string{
-					{Lexer.VAR}: "VAR",
-					{Lexer.VAL}:"VAL",
-					{Lexer.VAR,Lexer.VAL}:"VAR or VAL",
+					//the fact that I'm even putting this here is disappointing
+					VVTS := map[[2]Lexer.Lexicon]string{
+						{Lexer.VAR}:            "VAR",
+						{Lexer.VAL}:            "VAL",
+						{Lexer.VAR, Lexer.VAL}: "VAR or VAL",
+					}
+					fmt.Println("error", errors, ":", lcons[0].Dat, "was expecting a", VVTS[v], "but instead got a", lcons[1+k].Dat, "on line:", line)
+					errors++
 				}
-				fmt.Println("error",errors,":",lcons[0].Dat,"was expecting a",VVTS[v],"but instead got a",lcons[1+k].Dat,"on line:",line)
-				errors++
 			}
+		} else {
+			fmt.Println("error",errors,": Not enough arguments supplied to",lcons[0].Dat,", was expecting",len(WantedLexicons[lcons[0].Lcon]),"arguments, got",len(lcons)-1,"arguments. line",line)
+			errors++
 		}
 	} else {
 		//must be var or val

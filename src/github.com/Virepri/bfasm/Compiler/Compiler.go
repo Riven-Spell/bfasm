@@ -171,7 +171,63 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 			}
 		case Lexer.CPY:
 			//You might as well kill me as I write this.
+			fref, fs, fa := getRefPtr(lcon[k+1].Dat,line)
+			tref, ts, ta := getRefPtr(lcon[k+2].Dat,line)
 
+			if fs && ts {
+				if fa == 1 {
+					//array ref
+					if ta == 1 {
+						//array ref
+						fromname := lcon[k+1].Dat[:strings.Index(lcon[k+1].Dat,"[")]
+						toname := lcon[k+2].Dat[:strings.Index(lcon[k+2].Dat,"[")]
+
+						if VarLexer.Variables[fromname].Arrlen <= VarLexer.Variables[toname].Arrlen {
+							tempref := bindTempArrayAlloc(uint(VarLexer.Variables[fromname].Arrlen))
+							o += getMoveOp(tempref)
+							o += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
+							o += getMoveOp(tref)
+							o += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
+							o += getMoveOp(fref)
+							for k,_ := range make([]bool,VarLexer.Variables[fromname].Arrlen) {
+								o += getMoveOp(fref+uint(k))
+								o += "["
+								o += getMoveOp(tempref+uint(k))
+								o += "+"
+								o += getMoveOp(tref+uint(k))
+								o += "+"
+								o += getMoveOp(fref+uint(k))
+								o += "-]"
+							} //copy to tempref and toref
+							for k,_ := range make([]bool,VarLexer.Variables[fromname].Arrlen) {
+								o += getMoveOp(tempref+uint(k))
+								o += "["
+								o += getMoveOp(fref+uint(k))
+								o += "+"
+								o += getMoveOp(tempref+uint(k))
+								o += "-]"
+							} //destroy tempref and move to fromref
+						} else {
+							fmt.Println("error: Cannot copy an array larger than the destination to the destination. line",line)
+						}
+					} else {
+						//this won't work.
+						fmt.Println("error: Cannot copy an array to a simple variable. line",line)
+						return "",false
+					}
+				} else {
+					//typical element/var ref
+					if ta == 1 {
+						fmt.Println("warning: Copying a simple variable to an array without an element reference will only overwrite the first index.")
+					}
+					tempref := bindTempAlloc()
+					o += getMoveOp(tempref) + "[-]" + getMoveOp(tref) + "[-]" + getMoveOp(fref) //set tempref and toref to 0
+					o += "[" + getMoveOp(tempref) + "+" + getMoveOp(tref) + "+" + getMoveOp(fref) + "-]"
+					o += getMoveOp(tempref) + "[" + getMoveOp(fref) + "+" + getMoveOp(tempref) + "-]"
+				}
+			} else {
+				return "",false
+			}
 		case Lexer.ADD:
 		case Lexer.SUB:
 		case Lexer.MUL:
@@ -252,6 +308,20 @@ func bindTempAlloc() uint {
 		end:uint(endofallocs+1),
 	})
 	endofallocs++
+	o = uint(endofallocs)
+
+	return o
+}
+
+func bindTempArrayAlloc(l uint) (uint) {
+	o := uint(0)
+
+	tempalloc = append(tempalloc,Allocation{
+		varname:"temp"+strconv.Itoa(len(tempalloc)),
+		start:uint(endofallocs+1),
+		end:uint(endofallocs)+l,
+	})
+	endofallocs += int(l)
 	o = uint(endofallocs)
 
 	return o
