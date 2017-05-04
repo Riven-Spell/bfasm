@@ -7,7 +7,6 @@ import (
 	"strings"
 	"strconv"
 	"github.com/Virepri/bfasm/SyntaxUtil"
-	"github.com/Virepri/bfasm/HexUtil"
 )
 
 type Allocation struct {
@@ -155,14 +154,15 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 					switch vt {
 					case 0:
 						//hex
-						o += strings.Repeat("+", HexUtil.HexToInt(lcon[k+2].Dat[2:]))
+						hexout, _ := strconv.ParseInt(lcon[k+2].Dat,16,16);
+						o += strings.Repeat("+", int(hexout))
 					case 1:
 						//int
 						num, _ := strconv.Atoi(lcon[k+2].Dat)
 						o += strings.Repeat("+", num)
 					case 2:
 						//string
-						info := uint8(lcon[k+2].Dat[1])
+						info := uint8(lcon[k+2].Dat[0])
 						o += strings.Repeat("+", int(info))
 					}
 				}
@@ -222,13 +222,14 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 					}
 					tempref := bindTempAlloc()
 					o += getMoveOp(tempref) + "[-]" + getMoveOp(tref) + "[-]" + getMoveOp(fref) //set tempref and toref to 0
-					o += "[" + getMoveOp(tempref) + "+" + getMoveOp(tref) + "+" + getMoveOp(fref) + "-]"
-					o += getMoveOp(tempref) + "[" + getMoveOp(fref) + "+" + getMoveOp(tempref) + "-]"
+					o += "[" + getMoveOp(tempref) + "+" + getMoveOp(tref) + "+" + getMoveOp(fref) + "-]" //copy fromref to tempref and toref
+					o += getMoveOp(tempref) + "[" + getMoveOp(fref) + "+" + getMoveOp(tempref) + "-]" //set fromref to tempref destructively
 				}
 			} else {
 				return "",false
 			}
 		case Lexer.ADD:
+
 		case Lexer.SUB:
 		case Lexer.MUL:
 		case Lexer.DIV:

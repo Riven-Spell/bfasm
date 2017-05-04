@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"github.com/Virepri/bfasm/SyntaxUtil"
+	"strconv"
 )
 
 //What do we do here?
@@ -28,7 +29,7 @@ var WantedLexicons map[Lexer.Lexicon][][2]Lexer.Lexicon = map[Lexer.Lexicon][][2
 	Lexer.DIV:{{Lexer.VAR},{Lexer.VAR,Lexer.VAL}}, //math ops
 
 	Lexer.READ:{{Lexer.VAR},{Lexer.VAL}},
-	Lexer.PRINT:{{Lexer.VAR},{Lexer.VAL}}, //IO ops
+	Lexer.PRINT:{{Lexer.VAR,Lexer.VAL},{Lexer.VAL}}, //IO ops
 
 	Lexer.BF:{{Lexer.VAL},{Lexer.VAL}}, //Special ops
 }
@@ -81,9 +82,21 @@ func AnalyzeSyntax(lcons []Lexer.Token, line, errors int) bool {
 				}
 			}
 		} else {
-			if SyntaxUtil.GetValType(lcons[0].Dat) == 3 {
+			if vt := SyntaxUtil.GetValType(lcons[0].Dat); vt == 3 {
 				fmt.Println("error",errors,": Value on line",line,"is an invalid value.")
 				errors++
+			} else if vt == 0 {
+				num,_ := strconv.ParseInt(lcons[0].Dat,16,16)
+				if num > 255 || num < 0 {
+					fmt.Println("error",errors,": Value on line",line,"exceeds the size of a unsigned integer (8 bits)")
+					errors++
+				}
+			} else if vt == 1 {
+				num,_ := strconv.Atoi(lcons[0].Dat)
+				if num > 255 || num < 0 {
+					fmt.Println("error",errors,": Value on line",line,"exceeds the size of a unsigned integer (8 bits)")
+					errors++
+				}
 			}
 		}
 	}

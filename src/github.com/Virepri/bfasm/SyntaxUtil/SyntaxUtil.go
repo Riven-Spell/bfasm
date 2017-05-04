@@ -6,7 +6,7 @@ import (
 )
 
 func GetValType(dat string) uint {
-	if strings.Index(dat,"0x") == 0 {
+	if _,err := strconv.ParseInt(dat,16,16); err == nil {
 		//hex
 		return 0
 	} else if _,err := strconv.Atoi(dat); err == nil {
