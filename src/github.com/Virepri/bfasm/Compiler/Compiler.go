@@ -24,7 +24,7 @@ var ifallocs []int
 var ptrloc uint
 
 func Compile(lcon []Lexer.Token) (string,bool) {
-	o := ""
+	output := ""
 	ptrloc = uint(0)
 	depthpointers := []uint {}
 	depthpointerstype := []Lexer.Lexicon{}
@@ -66,21 +66,21 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				default:
 					depthpointers = append(depthpointers,ref)
 					depthpointerstype = append(depthpointerstype,Lexer.WHILE)
-					o += getMoveOp(ref)
+					output += getMoveOp(ref)
 				}
 			} else {
 				return "",false
 			}
 
-			o += "["
+			output += "["
 			depthpointerstype = append(depthpointerstype,Lexer.WHILE)
 		case Lexer.IF:
 			allocpoint := bindTempAlloc()
 
 			ifallocs = append(ifallocs,len(tempalloc)-1)
 
-			o += getMoveOp(allocpoint)
-			o += "[-]"
+			output += getMoveOp(allocpoint)
+			output += "[-]"
 
 			ref,s,a := getRefPtr(lcon[k+1].Dat,line)
 
@@ -92,27 +92,27 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				default:
 					depthpointers = append(depthpointers,ref)
 					depthpointerstype = append(depthpointerstype,Lexer.IF)
-					o += getMoveOp(ref)
+					output += getMoveOp(ref)
 				}
 			} else {
 				return "",false
 			}
 
-			o += "[" + getMoveOp(allocpoint) + "-]" + getMoveOp(allocpoint) + "[" + getMoveOp(ref)
+			output += "[" + getMoveOp(allocpoint) + "-]" + getMoveOp(allocpoint) + "[" + getMoveOp(ref)
 
 		case Lexer.UNTIL:
 			//TODO: this. I'm gonna give it a bit because I'm sick of programming loops
 		case Lexer.END:
 			switch depthpointerstype[len(depthpointerstype)-1] {
 			case Lexer.WHILE:
-				o += getMoveOp(depthpointers[len(depthpointers)-1])
-				o += "]"
+				output += getMoveOp(depthpointers[len(depthpointers)-1])
+				output += "]"
 				depthpointers = depthpointers[:len(depthpointers)-1]
 				depthpointerstype = depthpointerstype[:len(depthpointerstype)-1]
 			case Lexer.IF:
-				o += getMoveOp(tempalloc[ifallocs[len(ifallocs)-1]].start)
-				o += "[-]]"
-				o += getMoveOp(depthpointers[len(depthpointers)-1])
+				output += getMoveOp(tempalloc[ifallocs[len(ifallocs)-1]].start)
+				output += "[-]]"
+				output += getMoveOp(depthpointers[len(depthpointers)-1])
 				depthpointers = depthpointers[:len(depthpointers)-1]
 				depthpointerstype = depthpointerstype[:len(depthpointerstype)-1]
 				ifallocs = ifallocs[:len(ifallocs)-1]
@@ -128,15 +128,15 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 					//array ref
 					if SyntaxUtil.GetValType(lcon[k+2].Dat) == 2 {
 						if len(lcon[k+2].Dat) - 2 <= VarLexer.Variables[lcon[k+1].Dat].Arrlen {
-							o += getMoveOp(ref)
-							o += strings.Repeat("[-]>", len(lcon[k+1].Dat))
-							o = o[:len(o)-1]
+							output += getMoveOp(ref)
+							output += strings.Repeat("[-]>", len(lcon[k+1].Dat))
+							output = output[:len(output)-1]
 							ptrloc += uint(len(lcon[k+1].Dat))
 
-							o += getMoveOp(ref)
+							output += getMoveOp(ref)
 							for k, v := range []uint8(lcon[k+2].Dat[1:len(lcon[k+2].Dat)-1]) {
-								o += getMoveOp(ref + uint(k))
-								o += strings.Repeat("+", int(v))
+								output += getMoveOp(ref + uint(k))
+								output += strings.Repeat("+", int(v))
 							}
 						} else {
 							fmt.Println("error: Cannot assign a string larger than the array's size. line",line)
@@ -148,22 +148,22 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 					}
 				default:
 					//var ref
-					o += getMoveOp(ref)
-					o += "[-]"
+					output += getMoveOp(ref)
+					output += "[-]"
 					vt := SyntaxUtil.GetValType(lcon[k+2].Dat)
 					switch vt {
 					case 0:
 						//hex
 						hexout, _ := strconv.ParseInt(lcon[k+2].Dat,16,16);
-						o += strings.Repeat("+", int(hexout))
+						output += strings.Repeat("+", int(hexout))
 					case 1:
 						//int
 						num, _ := strconv.Atoi(lcon[k+2].Dat)
-						o += strings.Repeat("+", num)
+						output += strings.Repeat("+", num)
 					case 2:
 						//string
 						info := uint8(lcon[k+2].Dat[1])
-						o += strings.Repeat("+", int(info))
+						output += strings.Repeat("+", int(info))
 					}
 				}
 			} else {
@@ -184,29 +184,30 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 
 						if VarLexer.Variables[fromname].Arrlen <= VarLexer.Variables[toname].Arrlen {
 							tempref := bindTempArrayAlloc(uint(VarLexer.Variables[fromname].Arrlen))
-							o += getMoveOp(tempref)
-							o += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
-							o += getMoveOp(tref)
-							o += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
-							o += getMoveOp(fref)
+							output += getMoveOp(tempref)
+							output += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
+							output += getMoveOp(tref)
+							output += strings.Repeat("[-]>", VarLexer.Variables[fromname].Arrlen)
+							output += getMoveOp(fref)
 							for k,_ := range make([]bool,VarLexer.Variables[fromname].Arrlen) {
-								o += getMoveOp(fref+uint(k))
-								o += "["
-								o += getMoveOp(tempref+uint(k))
-								o += "+"
-								o += getMoveOp(tref+uint(k))
-								o += "+"
-								o += getMoveOp(fref+uint(k))
-								o += "-]"
+								output += getMoveOp(fref+uint(k))
+								output += "["
+								output += getMoveOp(tempref+uint(k))
+								output += "+"
+								output += getMoveOp(tref+uint(k))
+								output += "+"
+								output += getMoveOp(fref+uint(k))
+								output += "-]"
 							} //copy to tempref and toref
 							for k,_ := range make([]bool,VarLexer.Variables[fromname].Arrlen) {
-								o += getMoveOp(tempref+uint(k))
-								o += "["
-								o += getMoveOp(fref+uint(k))
-								o += "+"
-								o += getMoveOp(tempref+uint(k))
-								o += "-]"
+								output += getMoveOp(tempref+uint(k))
+								output += "["
+								output += getMoveOp(fref+uint(k))
+								output += "+"
+								output += getMoveOp(tempref+uint(k))
+								output += "-]"
 							} //destroy tempref and move to fromref
+							unbindTempAlloc()
 						} else {
 							fmt.Println("error: Cannot copy an array larger than the destination to the destination. line",line)
 						}
@@ -218,19 +219,168 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 				} else {
 					//typical element/var ref
 					if ta == 1 {
-						fmt.Println("warning: Copying a simple variable to an array without an element reference will only overwrite the first index.")
+						fmt.Println("warning: Copying a simple variable to an array without an element reference will only overwrite the first index. line",line)
 					}
 					tempref := bindTempAlloc()
-					o += getMoveOp(tempref) + "[-]" + getMoveOp(tref) + "[-]" + getMoveOp(fref) //set tempref and toref to 0
-					o += "[" + getMoveOp(tempref) + "+" + getMoveOp(tref) + "+" + getMoveOp(fref) + "-]" //copy fromref to tempref and toref
-					o += getMoveOp(tempref) + "[" + getMoveOp(fref) + "+" + getMoveOp(tempref) + "-]" //set fromref to tempref destructively
+					output += getMoveOp(tempref) + "[-]" + getMoveOp(tref) + "[-]" + getMoveOp(fref)          //set tempref and toref to 0
+					output += "[" + getMoveOp(tempref) + "+" + getMoveOp(tref) + "+" + getMoveOp(fref) + "-]" //copy fromref to tempref and toref
+					output += getMoveOp(tempref) + "[" + getMoveOp(fref) + "+" + getMoveOp(tempref) + "-]"    //set fromref to tempref destructively
+					unbindTempAlloc()
 				}
 			} else {
 				return "",false
 			}
 		case Lexer.ADD:
+			switch lcon[k+2].Lcon {
+			case Lexer.VAR:
+				//do a copy operation but don't destroy arg1
+				arg0loc,a0suc,a0r := getRefPtr(lcon[k+1].Dat,line)
+				arg1loc,a1suc,a1r := getRefPtr(lcon[k+2].Dat,line)
 
+				if a0suc && a1suc {
+					if a0r == 1 {
+						if a1r == 1 {
+							//adding an array to an array
+							if VarLexer.Variables[lcon[k+1].Dat].Arrlen >= VarLexer.Variables[lcon[k+2].Dat].Arrlen {
+								//possible
+								tloc := bindTempArrayAlloc(uint(VarLexer.Variables[lcon[k+2].Dat].Arrlen))
+								output += getMoveOp(tloc) + strings.Repeat("[-]>",VarLexer.Variables[lcon[k+2].Dat].Arrlen)
+								for k,_ := range make([]bool,VarLexer.Variables[lcon[k+2].Dat].Arrlen) {
+									output += getMoveOp(arg1loc+uint(k))
+									output += "[" + getMoveOp(tloc+uint(k)) + "+" + getMoveOp(arg0loc+uint(k)) + "+" + getMoveOp(arg1loc+uint(k)) + "-]"
+									output += getMoveOp(tloc+uint(k))
+									output += "[" + getMoveOp(arg1loc+uint(k)) + "+" + getMoveOp(tloc+uint(k)) + "-]"
+								}
+								unbindTempAlloc()
+							} else {
+								//not possible
+								fmt.Println("error: Cannot add array", lcon[k+2].Dat, "to", lcon[k+1].Dat, "as", lcon[k+2].Dat, "is larger than", lcon[k+1].Dat, ". line", line)
+								return "", false
+							}
+						} else {
+							//adding a variable to an array
+							fmt.Println("warning: Adding a variable to an array only adds to the first element. line",line)
+							tloc := bindTempAlloc()
+							output += getMoveOp(tloc) + "[-]"
+							output += getMoveOp(arg1loc) + "[" + getMoveOp(tloc) + "+" + getMoveOp(arg0loc) + "+" + getMoveOp(arg1loc) + "-]"
+							output += getMoveOp(tloc) + "[" + getMoveOp(arg1loc) + "+" + getMoveOp(tloc) + "-]"
+							unbindTempAlloc()
+						}
+					} else {
+						if a1r == 1 {
+							fmt.Println("error: Cannot add an array to a simple variable (or array element). line",line)
+							return "",false
+						}
+						//adding a variable to a variable
+						tloc := bindTempAlloc()
+						output += getMoveOp(tloc) + "[-]"
+						output += getMoveOp(arg1loc) + "[" + getMoveOp(tloc) + "+" + getMoveOp(arg0loc) + "+" + getMoveOp(arg1loc) + "-]"
+						output += getMoveOp(tloc) + "[" + getMoveOp(arg1loc) + "+" + getMoveOp(tloc) + "-]"
+						unbindTempAlloc()
+					}
+				} else {
+					return "",false
+				}
+ 			case Lexer.VAL:
+				//just kinda do a set operation but don't destroy arg1
+				if vt := SyntaxUtil.GetValType(lcon[k+2].Dat); vt != 2 {
+					arg0loc, a0suc, _ := getRefPtr(lcon[k+1].Dat, line)
+					if a0suc {
+						output += getMoveOp(arg0loc)
+						num := int64(0)
+						if vt == 0 {
+							num,_ = strconv.ParseInt(lcon[k+2].Dat,16,16)
+						} else {
+							tnum,_ := strconv.Atoi(lcon[k+2].Dat)
+							num = int64(tnum)
+						}
+						output += strings.Repeat("+",int(num))
+					} else {
+						return "", false
+					}
+				} else {
+					fmt.Println("error: Cannot add a string. Like, how does that even work? line",line)
+					fmt.Println("If you were wanting to add the ASCII values of the string over an array")
+					fmt.Println("Consider \nSET <array1> <string>\nADD <array0> <array1>")
+					return "",false
+				}
+			}
 		case Lexer.SUB:
+			//same thing as ADD, just with -
+			switch lcon[k+2].Lcon {
+			case Lexer.VAR:
+				//do a copy operation but don't destroy arg1
+				arg0loc,a0suc,a0r := getRefPtr(lcon[k+1].Dat,line)
+				arg1loc,a1suc,a1r := getRefPtr(lcon[k+2].Dat,line)
+
+				if a0suc && a1suc {
+					if a0r == 1 {
+						if a1r == 1 {
+							//adding an array to an array
+							if VarLexer.Variables[lcon[k+1].Dat].Arrlen >= VarLexer.Variables[lcon[k+2].Dat].Arrlen {
+								//possible
+								tloc := bindTempArrayAlloc(uint(VarLexer.Variables[lcon[k+2].Dat].Arrlen))
+								output += getMoveOp(tloc) + strings.Repeat("[-]>",VarLexer.Variables[lcon[k+2].Dat].Arrlen)
+								for k,_ := range make([]bool,VarLexer.Variables[lcon[k+2].Dat].Arrlen) {
+									output += getMoveOp(arg1loc+uint(k))
+									output += "[" + getMoveOp(tloc+uint(k)) + "+" + getMoveOp(arg0loc+uint(k)) + "-" + getMoveOp(arg1loc+uint(k)) + "-]"
+									output += getMoveOp(tloc+uint(k))
+									output += "[" + getMoveOp(arg1loc+uint(k)) + "+" + getMoveOp(tloc+uint(k)) + "-]"
+								}
+								unbindTempAlloc()
+							} else {
+								//not possible
+								fmt.Println("error: Cannot subtract array", lcon[k+2].Dat, "from", lcon[k+1].Dat, "as", lcon[k+2].Dat, "is larger than", lcon[k+1].Dat, ". line", line)
+								return "", false
+							}
+						} else {
+							//adding a variable to an array
+							fmt.Println("warning: Subtracting a variable from an array only subtracts to the first element. line",line)
+							tloc := bindTempAlloc()
+							output += getMoveOp(tloc) + "[-]"
+							output += getMoveOp(arg1loc) + "[" + getMoveOp(tloc) + "+" + getMoveOp(arg0loc) + "-" + getMoveOp(arg1loc) + "-]"
+							output += getMoveOp(tloc) + "[" + getMoveOp(arg1loc) + "+" + getMoveOp(tloc) + "-]"
+							unbindTempAlloc()
+						}
+					} else {
+						if a1r == 1 {
+							fmt.Println("error: Cannot subtract an array from a simple variable (or array element). line",line)
+							return "",false
+						}
+						//adding a variable to a variable
+						tloc := bindTempAlloc()
+						output += getMoveOp(tloc) + "[-]"
+						output += getMoveOp(arg1loc) + "[" + getMoveOp(tloc) + "+" + getMoveOp(arg0loc) + "-" + getMoveOp(arg1loc) + "-]"
+						output += getMoveOp(tloc) + "[" + getMoveOp(arg1loc) + "+" + getMoveOp(tloc) + "-]"
+						unbindTempAlloc()
+					}
+				} else {
+					return "",false
+				}
+			case Lexer.VAL:
+				//just kinda do a set operation but don't destroy arg1
+				if vt := SyntaxUtil.GetValType(lcon[k+2].Dat); vt != 2 {
+					arg0loc, a0suc, _ := getRefPtr(lcon[k+1].Dat, line)
+					if a0suc {
+						output += getMoveOp(arg0loc)
+						num := int64(0)
+						if vt == 0 {
+							num,_ = strconv.ParseInt(lcon[k+2].Dat,16,16)
+						} else {
+							tnum,_ := strconv.Atoi(lcon[k+2].Dat)
+							num = int64(tnum)
+						}
+						output += strings.Repeat("-",int(num))
+					} else {
+						return "", false
+					}
+				} else {
+					fmt.Println("error: Cannot subtract a string. Like, how does that even work? line",line)
+					fmt.Println("If you were wanting to subtract the ASCII values of the string over an array")
+					fmt.Println("Consider \nSET <array1> <string>\nSUB <array0> <array1>")
+					return "",false
+				}
+			}
 		case Lexer.MUL:
 		case Lexer.DIV:
 
@@ -241,7 +391,7 @@ func Compile(lcon []Lexer.Token) (string,bool) {
 		}
 	}
 
-	return o,true
+	return output,true
 }
 
 func getMoveOp(endptr uint) string {
@@ -326,4 +476,18 @@ func bindTempArrayAlloc(l uint) (uint) {
 	o = uint(endofallocs)
 
 	return o
+}
+
+func unbindTempAlloc() {
+	talloc := tempalloc[len(tempalloc)-1]
+	if talloc.start == talloc.end {
+		//unbinding simple variable
+		tempalloc = tempalloc[:len(tempalloc)-1]
+		endofallocs--
+	} else {
+		//unbinding array
+		arrlen := (talloc.end - talloc.start) + 1
+		tempalloc = tempalloc[:len(tempalloc)-1]
+		endofallocs -= int(arrlen)
+	}
 }
